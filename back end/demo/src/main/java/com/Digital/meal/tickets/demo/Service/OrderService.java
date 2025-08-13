@@ -348,11 +348,11 @@ public class OrderService {
         if (existingOrder.isPresent()) {
             OrderEntity order = existingOrder.get();
             
-            if (orderDTO.getAgenciesId() != null) order.setAgenciesId(orderDTO.getAgenciesId());
-            if (orderDTO.getUserId() != null) order.setUserId(orderDTO.getUserId());
-            if (orderDTO.getStatus() != null) order.setStatus(orderDTO.getStatus());
-            if (orderDTO.getSuggestion() != null) order.setSuggestion(orderDTO.getSuggestion());
-            if (orderDTO.getExpirationTime() != null) order.setExpirationTime(orderDTO.getExpirationTime());
+            if (orderDTO.getAgenciesId() != null){ order.setAgenciesId(orderDTO.getAgenciesId());}
+            if (orderDTO.getUserId() != null){ order.setUserId(orderDTO.getUserId());}
+            if (orderDTO.getStatus() != null) {order.setStatus(orderDTO.getStatus());}
+            if (orderDTO.getSuggestion() != null){ order.setSuggestion(orderDTO.getSuggestion());}
+            if (orderDTO.getExpirationTime() != null){ order.setExpirationTime(orderDTO.getExpirationTime());}
             
             OrderEntity savedOrder = orderRepository.save(order);
             return Optional.of(convertToDTO(savedOrder));
