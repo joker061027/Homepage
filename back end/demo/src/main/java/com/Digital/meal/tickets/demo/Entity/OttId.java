@@ -22,8 +22,8 @@ public class OttId implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {return true;}
+        if (o == null || getClass() != o.getClass()) {return false;}
         OttId ottId = (OttId) o;
         return Objects.equals(orderId, ottId.orderId) && Objects.equals(typeId, ottId.typeId);
     }
