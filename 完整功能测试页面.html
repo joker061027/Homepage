@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字餐票管理系统 - 完整功能测试</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .nav-tabs { display: flex; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
+        .nav-tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; border: none; background: transparent; font-weight: 600; transition: all 0.3s; }
+        .nav-tab.active { background: white; border-bottom: 3px solid #007bff; color: #007bff; }
+        .nav-tab:hover { background: #e9ecef; }
+        .content { padding: 30px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .function-group { margin-bottom: 30px; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; }
+        .group-header { background: #f8f9fa; padding: 15px; border-bottom: 1px solid #dee2e6; font-weight: 600; color: #495057; }
+        .group-body { padding: 20px; }
+        .test-item { margin-bottom: 20px; padding: 15px; border: 1px solid #e9ecef; border-radius: 5px; background: #fafafa; }
+        .test-item h4 { margin-bottom: 10px; color: #495057; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+        .form-row label { min-width: 80px; font-weight: 600; color: #6c757d; }
+        .form-row input, .form-row select, .form-row textarea { flex: 1; min-width: 200px; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; }
+        .form-row textarea { min-height: 60px; resize: vertical; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s; margin: 2px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .response-area { margin-top: 10px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        .success { border-color: #28a745; background: #d4edda; color: #155724; }
+        .error { border-color: #dc3545; background: #f8d7da; color: #721c24; }
+        .loading { border-color: #ffc107; background: #fff3cd; color: #856404; }
+        .api-info { background: #e3f2fd; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 12px; }
+        .api-info code { background: #1976d2; color: white; padding: 2px 4px; border-radius: 2px; }
+        .status-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-loading { background: #ffc107; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .quick-actions { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .data-table th, .data-table td { padding: 8px; border: 1px solid #dee2e6; text-align: left; }
+        .data-table th { background: #f8f9fa; font-weight: 600; }
+        .json-viewer { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 12px; overflow-x: auto; }
+        .order-item { display: flex; align-items: center; margin: 5px 0; padding: 8px; background: #e8f5e8; border-radius: 5px; border-left: 4px solid #28a745; }
+        .order-item-text { flex: 1; font-weight: 600; color: #155724; }
+        .btn-small { padding: 4px 8px; font-size: 12px; margin-left: 8px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <div class="header">
+                <h1>🎫 数字餐票管理系统</h1>
+                <p>完整功能测试平台 - CRUD操作测试</p>
+            </div>
+            
+            <div class="nav-tabs">
+                <button class="nav-tab active" @click="activeTab = 'users'">👤 用户管理</button>
+                <button class="nav-tab" @click="activeTab = 'orders'">📋 订单管理</button>
+                <button class="nav-tab" @click="activeTab = 'tickets'">🎫 餐票管理</button>
+                <button class="nav-tab" @click="activeTab = 'agencies'">🏢 部门管理</button>
+                <button class="nav-tab" @click="activeTab = 'canteen'">🍽️ 食堂管理</button>
+                <button class="nav-tab" @click="activeTab = 'system'">⚙️ 系统功能</button>
+            </div>
+            
+            <div class="content">
+                <!-- 用户管理 -->
+                <div class="tab-content" :class="{active: activeTab === 'users'}">
+                    <div class="quick-actions">
+                        <div style="display: inline-block; margin-right: 15px;">
+                            <button class="btn btn-info" @click="loadAllUsers">📋 加载所有用户</button>
+                            <br><small style="color: #666;">GET /api/users</small>
+                        </div>
+                        <div style="display: inline-block;">
+                            <button class="btn btn-success" @click="clearForm('user')">🆕 新建用户</button>
+                            <br><small style="color: #666;">清空表单</small>
+                        </div>
+                    </div>
+
+                    <!-- 用户选择区域 -->
+                    <div class="function-group">
+                        <div class="group-header">🔍 用户选择操作</div>
+                        <div class="group-body">
+                            <div class="test-item">
+                                <h4>选择用户进行操作</h4>
+                                <div class="form-row">
+                                    <label>选择用户:</label>
+                                    <select v-model="selectedUserId" @change="onUserSelect" style="width: 200px;">
+                                        <option value="">-- 请选择用户 --</option>
+                                        <option v-for="user in userList" :key="user.userId" :value="user.userId">
+                                            {{user.userId}} - {{user.fullName}} ({{user.userName}})
+                                        </option>
+                                    </select>
+                                    <button class="btn btn-secondary" @click="refreshUserList" style="margin-left: 10px;">
+                                        🔄 刷新列表
+                                    </button>
+                                </div>
+                                <div class="form-row" v-if="selectedUserId">
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-primary" @click="getUserBySelectedId">
+                                            <span class="status-indicator" :class="getStatusClass('getUser')"></span>
+                                            查询选中用户
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/users/{{selectedUserId}}</small>
+                                    </div>
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-danger" @click="deleteSelectedUser">
+                                            <span class="status-indicator" :class="getStatusClass('deleteUser')"></span>
+                                            删除选中用户
+                                        </button>
+                                        <br><small style="color: #666;">DELETE /api/users/{{selectedUserId}}</small>
+                                    </div>
+                                    <div style="display: inline-block;">
+                                        <button class="btn btn-info" @click="getSelectedUserStatistics">
+                                            <span class="status-indicator" :class="getStatusClass('userStats')"></span>
+                                            选中用户统计
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/users/{{selectedUserId}}/statistics</small>
+                                    </div>
+                                </div>
+                                <div v-if="selectedUserId" style="margin-top: 10px; padding: 10px; background: #f0f8ff; border-radius: 4px;">
+                                    <strong>当前选中:</strong> {{selectedUserId}}
+                                    <span v-if="selectedUserInfo"> - {{selectedUserInfo.fullName}} ({{selectedUserInfo.userName}})</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="function-group">
+                        <div class="group-header">👤 用户CRUD操作</div>
+                        <div class="group-body">
+                            <div class="test-item">
+                                <h4>用户信息表单</h4>
+                                <div class="form-row">
+                                    <label>用户ID:</label>
+                                    <input v-model="userForm.userId" placeholder="USER001" />
+                                    <label>用户名:</label>
+                                    <input v-model="userForm.userName" placeholder="admin" />
+                                </div>
+                                <div class="form-row">
+                                    <label>角色ID:</label>
+                                    <input v-model="userForm.roleId" placeholder="ROLE001" />
+                                    <label>部门ID:</label>
+                                    <input v-model="userForm.agenciesId" placeholder="DEPT001" />
+                                </div>
+                                <div class="form-row">
+                                    <label>姓名:</label>
+                                    <input v-model="userForm.fullName" placeholder="张三" />
+                                    <label>密码:</label>
+                                    <input v-model="userForm.password" type="password" placeholder="123456" />
+                                </div>
+                                <div class="form-row">
+                                    <label>状态:</label>
+                                    <select v-model="userForm.status">
+                                        <option value="1">启用</option>
+                                        <option value="0">禁用</option>
+                                    </select>
+                                    <label>手机号:</label>
+                                    <input v-model="userForm.phoneNumber" placeholder="13800138000" />
+                                </div>
+                                <div class="form-row">
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-success" @click="createUser">
+                                            <span class="status-indicator" :class="getStatusClass('createUser')"></span>
+                                            创建用户
+                                        </button>
+                                        <br><small style="color: #666;">POST /api/users</small>
+                                    </div>
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-primary" @click="getUserById">
+                                            <span class="status-indicator" :class="getStatusClass('getUser')"></span>
+                                            查询用户
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/users/{id}</small>
+                                    </div>
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-danger" @click="deleteUser">
+                                            <span class="status-indicator" :class="getStatusClass('deleteUser')"></span>
+                                            删除用户
+                                        </button>
+                                        <br><small style="color: #666;">DELETE /api/users/{id}</small>
+                                    </div>
+                                    <div style="display: inline-block;">
+                                        <button class="btn btn-info" @click="getUserStatistics">
+                                            <span class="status-indicator" :class="getStatusClass('userStats')"></span>
+                                            用户统计
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/users/{id}/statistics</small>
+                                    </div>
+                                </div>
+                                <div class="response-area" :class="getResponseClass('userOperation')" v-if="responses.userOperation">
+                                    {{ responses.userOperation }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 订单管理 -->
+                <div class="tab-content" :class="{active: activeTab === 'orders'}">
+                    <div class="quick-actions">
+                        <div style="display: inline-block; margin-right: 15px;">
+                            <button class="btn btn-info" @click="loadAllOrders">📋 加载所有订单</button>
+                            <br><small style="color: #666;">GET /api/orders</small>
+                        </div>
+                        <div style="display: inline-block; margin-right: 15px;">
+                            <button class="btn btn-primary" @click="loadOrdersWithPagination">📄 分页查询订单</button>
+                            <br><small style="color: #666;">GET /api/orders/page</small>
+                        </div>
+                        <div style="display: inline-block;">
+                            <button class="btn btn-success" @click="clearForm('order')">🆕 新建订单</button>
+                            <br><small style="color: #666;">清空表单</small>
+                        </div>
+                    </div>
+
+                    <!-- 分页查询区域 -->
+                    <div class="function-group">
+                        <div class="group-header">📄 分页查询功能</div>
+                        <div class="group-body">
+                            <div class="test-item">
+                                <h4>订单分页查询</h4>
+                                <div class="form-row">
+                                    <label>页码:</label>
+                                    <input v-model.number="orderPagination.page" type="number" min="0" placeholder="0" style="width: 80px;" />
+                                    <label>每页大小:</label>
+                                    <select v-model.number="orderPagination.size" style="width: 100px;">
+                                        <option value="5">5条</option>
+                                        <option value="10">10条</option>
+                                        <option value="20">20条</option>
+                                        <option value="50">50条</option>
+                                    </select>
+                                    <label>排序字段:</label>
+                                    <select v-model="orderPagination.sortBy" style="width: 150px;">
+                                        <option value="createDatetime">创建时间</option>
+                                        <option value="orderId">订单ID</option>
+                                        <option value="orderNumber">订单号</option>
+                                        <option value="status">状态</option>
+                                    </select>
+                                    <label>排序方向:</label>
+                                    <select v-model="orderPagination.sortDir" style="width: 100px;">
+                                        <option value="desc">降序</option>
+                                        <option value="asc">升序</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <label>查询用户ID:</label>
+                                    <input v-model="orderForm.userId" placeholder="USER001" style="width: 120px;" />
+                                    <label>查询状态:</label>
+                                    <select v-model.number="orderQuery.status" style="width: 120px;">
+                                        <option value="0">待审核</option>
+                                        <option value="1">已通过</option>
+                                        <option value="-1">已拒绝</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-primary" @click="loadOrdersWithPagination">
+                                            <span class="status-indicator" :class="getStatusClass('orderPagination')"></span>
+                                            分页查询
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/orders/page?page={{orderPagination.page}}&size={{orderPagination.size}}</small>
+                                    </div>
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-info" @click="loadOrdersByUserWithPagination">
+                                            <span class="status-indicator" :class="getStatusClass('orderUserPagination')"></span>
+                                            按用户分页查询
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/orders/page/user/{{orderForm.userId}}</small>
+                                    </div>
+                                    <div style="display: inline-block;">
+                                        <button class="btn btn-warning" @click="loadOrdersByStatusWithPagination">
+                                            <span class="status-indicator" :class="getStatusClass('orderStatusPagination')"></span>
+                                            按状态分页查询
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/orders/page/status/{{orderQuery.status}}</small>
+                                    </div>
+                                </div>
+                                <div v-if="orderPaginationResult" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                                    <strong>分页信息:</strong>
+                                    第{{orderPaginationResult.page + 1}}页 / 共{{orderPaginationResult.totalPages}}页 |
+                                    每页{{orderPaginationResult.size}}条 / 总计{{orderPaginationResult.totalElements}}条 |
+                                    <button class="btn btn-small" @click="previousPage" :disabled="orderPaginationResult.first">上一页</button>
+                                    <button class="btn btn-small" @click="nextPage" :disabled="orderPaginationResult.last">下一页</button>
+                                </div>
+
+                                <!-- 分页数据表格显示 -->
+                                <div v-if="orderPaginationResult && orderPaginationResult.content && orderPaginationResult.content.length > 0" style="margin-top: 15px;">
+                                    <h5>📋 订单列表 (当前页数据)</h5>
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>订单ID</th>
+                                                <th>订单号</th>
+                                                <th>用户ID</th>
+                                                <th>部门ID</th>
+                                                <th>状态</th>
+                                                <th>创建时间</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="order in orderPaginationResult.content" :key="order.orderId">
+                                                <td>{{order.orderId}}</td>
+                                                <td>{{order.orderNumber}}</td>
+                                                <td>{{order.userId}}</td>
+                                                <td>{{order.agenciesId}}</td>
+                                                <td>
+                                                    <span :style="{color: order.status === 1 ? 'green' : order.status === 0 ? 'orange' : 'red'}">
+                                                        {{order.status === 1 ? '已通过' : order.status === 0 ? '待审核' : '已拒绝'}}
+                                                    </span>
+                                                </td>
+                                                <td>{{order.createDatetime}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- 分页查询响应显示区域 -->
+                                <div class="response-area" :class="getResponseClass('orderPagination')" v-if="responses.orderPagination">
+                                    {{ responses.orderPagination }}
+                                </div>
+                                <div class="response-area" :class="getResponseClass('orderUserPagination')" v-if="responses.orderUserPagination">
+                                    {{ responses.orderUserPagination }}
+                                </div>
+                                <div class="response-area" :class="getResponseClass('orderStatusPagination')" v-if="responses.orderStatusPagination">
+                                    {{ responses.orderStatusPagination }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="function-group">
+                        <div class="group-header">📋 订单CRUD操作</div>
+                        <div class="group-body">
+                            <div class="test-item">
+                                <h4>智能订单创建</h4>
+                                <div class="api-info">
+                                    <strong>功能:</strong> 自动保存草稿，支持断点续编，一键提交订单
+                                </div>
+                                <div class="form-row">
+                                    <label>用户ID:</label>
+                                    <input v-model="orderForm.userId" placeholder="USER001" />
+                                    <label>部门ID:</label>
+                                    <input v-model="orderForm.agenciesId" placeholder="DEPT001" />
+                                </div>
+                                <div v-if="currentDraft" class="form-row" style="background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                                    <span style="color: #856404;">📝 检测到未完成的草稿: {{ currentDraft.draftId }}</span>
+                                    <div style="margin-top: 8px;">
+                                        <button class="btn btn-info" style="margin-right: 10px;" @click="loadDraft">📂 加载草稿</button>
+                                        <small style="color: #666;">GET /api/orders/draft/{id}</small>
+                                        <button class="btn btn-warning" style="margin-left: 15px; margin-right: 10px;" @click="clearDraft">🗑️ 清除草稿</button>
+                                        <small style="color: #666;">DELETE /api/orders/draft/{id}</small>
+                                    </div>
+                                </div>
+                                <div class="test-item">
+                                    <h4>订单项配置</h4>
+                                    <div class="form-row">
+                                        <label>餐票类型:</label>
+                                        <select v-model="orderForm.selectedTypeId">
+                                            <option value="">请选择餐票类型</option>
+                                            <option v-for="type in ticketTypes" :key="type.typeId" :value="type.typeId">
+                                                {{ type.typeName }} ({{ type.typeId }}) - ¥{{ type.value }}
+                                            </option>
+                                        </select>
+                                        <label>数量:</label>
+                                        <input v-model="orderForm.selectedAmount" type="number" placeholder="5" min="1" max="100" />
+                                        <button class="btn btn-success" @click="addOrderItem">➕ 添加</button>
+                                        <small style="color: #666; margin-left: 10px;">自动触发: POST /api/orders/start</small>
+                                    </div>
+                                    <div v-if="orderForm.orderItemsList.length > 0" style="margin-top: 10px;">
+                                        <strong>已添加的订单项:</strong>
+                                        <div v-for="(item, index) in orderForm.orderItemsList" :key="index" class="order-item">
+                                            <span class="order-item-text">{{ getTypeName(item.typeId) }} × {{ item.amount }}</span>
+                                            <button class="btn btn-danger btn-small" @click="removeOrderItem(index)">🗑️ 删除</button>
+                                            <small style="color: #666; margin-left: 5px;">自动触发: PUT /api/orders/draft/{id}/save</small>
+                                        </div>
+                                    </div>
+                                    <div class="form-row" style="margin-top: 10px;">
+                                        <label>JSON预览:</label>
+                                        <textarea v-model="orderForm.orderItems" placeholder='[{"typeId":"TYPE001","amount":5}]' readonly style="background: #f8f9fa;"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-success" @click="saveDraftAndContinue">
+                                            <span class="status-indicator" :class="getStatusClass('saveDraft')"></span>
+                                            💾 保存草稿
+                                        </button>
+                                        <br><small style="color: #666;">POST /api/orders/start 或 PUT /api/orders/draft/{id}/save</small>
+                                    </div>
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-primary" @click="createOrderFromDraft">
+                                            <span class="status-indicator" :class="getStatusClass('createOrder')"></span>
+                                            🚀 提交订单
+                                        </button>
+                                        <br><small style="color: #666;">POST /api/orders/draft/{id}/submit</small>
+                                    </div>
+                                    <div style="display: inline-block;" v-if="orderForm.orderItemsList.length > 0">
+                                        <button class="btn btn-info" @click="autoSaveDraft">
+                                            <span class="status-indicator" :class="getStatusClass('autoSave')"></span>
+                                            ⚡ 自动保存
+                                        </button>
+                                        <br><small style="color: #666;">PUT /api/orders/draft/{id}/save</small>
+                                    </div>
+                                </div>
+                                <div class="response-area" :class="getResponseClass('orderOperation')" v-if="responses.orderOperation">
+                                    {{ responses.orderOperation }}
+                                </div>
+                            </div>
+
+                            <div class="test-item">
+                                <h4>订单查询和管理</h4>
+                                <div class="form-row">
+                                    <label>订单ID:</label>
+                                    <input v-model="orderQuery.orderId" placeholder="ORDER001" />
+                                </div>
+                                <div class="form-row">
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-primary" @click="getOrderById">
+                                            <span class="status-indicator" :class="getStatusClass('getOrder')"></span>
+                                            查询订单
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/orders/{id}</small>
+                                    </div>
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-info" @click="getOrderDetails">
+                                            <span class="status-indicator" :class="getStatusClass('orderDetails')"></span>
+                                            详细信息
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/orders/{id}/details</small>
+                                    </div>
+                                    <div style="display: inline-block;">
+                                        <button class="btn btn-danger" @click="deleteOrder">
+                                            <span class="status-indicator" :class="getStatusClass('deleteOrder')"></span>
+                                            删除订单
+                                        </button>
+                                        <br><small style="color: #666;">DELETE /api/orders/{id}</small>
+                                    </div>
+                                </div>
+                                <div class="response-area" :class="getResponseClass('orderQuery')" v-if="responses.orderQuery">
+                                    {{ responses.orderQuery }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 餐票管理 -->
+                <div class="tab-content" :class="{active: activeTab === 'tickets'}">
+                    <div class="quick-actions">
+                        <div style="display: inline-block; margin-right: 15px;">
+                            <button class="btn btn-info" @click="loadAllTickets">📋 加载所有餐票</button>
+                            <br><small style="color: #666;">GET /api/tickets/selectAll</small>
+                        </div>
+                        <div style="display: inline-block;">
+                            <button class="btn btn-success" @click="clearForm('ticket')">🆕 新建餐票</button>
+                            <br><small style="color: #666;">清空表单</small>
+                        </div>
+                    </div>
+                    
+                    <div class="function-group">
+                        <div class="group-header">🎫 餐票CRUD操作</div>
+                        <div class="group-body">
+                            <div class="test-item">
+                                <h4>批量创建餐票</h4>
+                                <div class="api-info">
+                                    <strong>接口:</strong> <code>POST /api/tickets/create</code> - 批量创建餐票
+                                </div>
+                                <div class="form-row">
+                                    <label>订单ID:</label>
+                                    <input v-model="ticketForm.orderId" placeholder="ORDER001" />
+                                    <label>餐票类型:</label>
+                                    <input v-model="ticketForm.typeId" placeholder="TYPE001" />
+                                </div>
+                                <div class="form-row">
+                                    <label>数量:</label>
+                                    <input v-model="ticketForm.quantity" type="number" placeholder="10" />
+                                    <label>档口ID:</label>
+                                    <input v-model="ticketForm.stallId" placeholder="STALL001" />
+                                </div>
+                                <div class="form-row">
+                                    <div style="display: inline-block;">
+                                        <button class="btn btn-success" @click="createTickets">
+                                            <span class="status-indicator" :class="getStatusClass('createTickets')"></span>
+                                            批量创建餐票
+                                        </button>
+                                        <br><small style="color: #666;">POST /api/tickets/create</small>
+                                    </div>
+                                </div>
+                                <div class="response-area" :class="getResponseClass('ticketOperation')" v-if="responses.ticketOperation">
+                                    {{ responses.ticketOperation }}
+                                </div>
+                            </div>
+
+                            <div class="test-item">
+                                <h4>餐票查询和核销</h4>
+                                <div class="form-row">
+                                    <label>餐票ID:</label>
+                                    <input v-model="ticketQuery.ticketId" placeholder="TICKET001" />
+                                    <div style="display: inline-block; margin-left: 10px;">
+                                        <button class="btn btn-primary" @click="getTicketById">
+                                            <span class="status-indicator" :class="getStatusClass('getTicket')"></span>
+                                            查询餐票
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/tickets/{id}</small>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <label>核销人ID:</label>
+                                    <input v-model="ticketQuery.checkId" placeholder="USER001" />
+                                    <div style="display: inline-block; margin-left: 10px;">
+                                        <button class="btn btn-warning" @click="cancelTicket">
+                                            <span class="status-indicator" :class="getStatusClass('cancelTicket')"></span>
+                                            核销餐票
+                                        </button>
+                                        <br><small style="color: #666;">POST /api/tickets/{id}/cancel</small>
+                                    </div>
+                                </div>
+                                <div class="response-area" :class="getResponseClass('ticketQuery')" v-if="responses.ticketQuery">
+                                    {{ responses.ticketQuery }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 部门管理 -->
+                <div class="tab-content" :class="{active: activeTab === 'agencies'}">
+                    <div class="quick-actions">
+                        <div style="display: inline-block; margin-right: 15px;">
+                            <button class="btn btn-info" @click="loadAllAgencies">📋 加载所有部门</button>
+                            <br><small style="color: #666;">GET /api/agencies</small>
+                        </div>
+                        <div style="display: inline-block;">
+                            <button class="btn btn-success" @click="clearForm('agency')">🆕 新建部门</button>
+                            <br><small style="color: #666;">清空表单</small>
+                        </div>
+                    </div>
+                    
+                    <div class="function-group">
+                        <div class="group-header">🏢 部门CRUD操作</div>
+                        <div class="group-body">
+                            <div class="test-item">
+                                <h4>部门信息管理</h4>
+                                <div class="form-row">
+                                    <label>部门ID:</label>
+                                    <input v-model="agencyForm.agenciesId" placeholder="DEPT001" />
+                                    <label>部门名称:</label>
+                                    <input v-model="agencyForm.agenciesName" placeholder="技术部" />
+                                </div>
+                                <div class="form-row">
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-success" @click="createAgency">
+                                            <span class="status-indicator" :class="getStatusClass('createAgency')"></span>
+                                            创建部门
+                                        </button>
+                                        <br><small style="color: #666;">POST /api/agencies</small>
+                                    </div>
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-primary" @click="getAgencyById">
+                                            <span class="status-indicator" :class="getStatusClass('getAgency')"></span>
+                                            查询部门
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/agencies/{id}</small>
+                                    </div>
+                                    <div style="display: inline-block;">
+                                        <button class="btn btn-danger" @click="deleteAgency">
+                                            <span class="status-indicator" :class="getStatusClass('deleteAgency')"></span>
+                                            删除部门
+                                        </button>
+                                        <br><small style="color: #666;">DELETE /api/agencies/{id}</small>
+                                    </div>
+                                </div>
+                                <div class="response-area" :class="getResponseClass('agencyOperation')" v-if="responses.agencyOperation">
+                                    {{ responses.agencyOperation }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 食堂管理 -->
+                <div class="tab-content" :class="{active: activeTab === 'canteen'}">
+                    <div class="quick-actions">
+                        <div style="display: inline-block; margin-right: 15px;">
+                            <button class="btn btn-info" @click="loadAllCanteens">📋 加载所有食堂</button>
+                            <br><small style="color: #666;">GET /canteen</small>
+                        </div>
+                        <div style="display: inline-block;">
+                            <button class="btn btn-success" @click="clearForm('canteen')">🆕 新建食堂</button>
+                            <br><small style="color: #666;">清空表单</small>
+                        </div>
+                    </div>
+                    
+                    <div class="function-group">
+                        <div class="group-header">🍽️ 食堂CRUD操作</div>
+                        <div class="group-body">
+                            <div class="test-item">
+                                <h4>食堂信息管理</h4>
+                                <div class="form-row">
+                                    <label>食堂ID:</label>
+                                    <input v-model="canteenForm.canteenId" placeholder="CANTEEN001" />
+                                    <label>食堂名称:</label>
+                                    <input v-model="canteenForm.canteenName" placeholder="第一食堂" />
+                                </div>
+                                <div class="form-row">
+                                    <label>状态:</label>
+                                    <select v-model="canteenForm.status">
+                                        <option value="1">营业</option>
+                                        <option value="0">停业</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-success" @click="createCanteen">
+                                            <span class="status-indicator" :class="getStatusClass('createCanteen')"></span>
+                                            创建食堂
+                                        </button>
+                                        <br><small style="color: #666;">POST /canteen</small>
+                                    </div>
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-primary" @click="getCanteenById">
+                                            <span class="status-indicator" :class="getStatusClass('getCanteen')"></span>
+                                            查询食堂
+                                        </button>
+                                        <br><small style="color: #666;">GET /canteen/{id}</small>
+                                    </div>
+                                    <div style="display: inline-block;">
+                                        <button class="btn btn-warning" @click="updateCanteen">
+                                            <span class="status-indicator" :class="getStatusClass('updateCanteen')"></span>
+                                            更新食堂
+                                        </button>
+                                        <br><small style="color: #666;">PUT /canteen</small>
+                                    </div>
+                                </div>
+                                <div class="response-area" :class="getResponseClass('canteenOperation')" v-if="responses.canteenOperation">
+                                    {{ responses.canteenOperation }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统功能 -->
+                <div class="tab-content" :class="{active: activeTab === 'system'}">
+                    <div class="function-group">
+                        <div class="group-header">⚙️ 系统功能测试</div>
+                        <div class="group-body">
+                            <div class="test-item">
+                                <h4>数据库连接测试</h4>
+                                <div class="form-row">
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-success" @click="testDatabaseHealth">
+                                            <span class="status-indicator" :class="getStatusClass('dbHealth')"></span>
+                                            健康检查
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/database-test/health</small>
+                                    </div>
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-info" @click="testDatabaseConnection">
+                                            <span class="status-indicator" :class="getStatusClass('dbConnection')"></span>
+                                            连接测试
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/database-test/connection</small>
+                                    </div>
+                                    <div style="display: inline-block;">
+                                        <button class="btn btn-primary" @click="getDatabaseInfo">
+                                            <span class="status-indicator" :class="getStatusClass('dbInfo')"></span>
+                                            数据库信息
+                                        </button>
+                                        <br><small style="color: #666;">GET /api/database-test/info</small>
+                                    </div>
+                                </div>
+                                <div class="response-area" :class="getResponseClass('systemOperation')" v-if="responses.systemOperation">
+                                    {{ responses.systemOperation }}
+                                </div>
+                            </div>
+
+                            <div class="test-item">
+                                <h4>批量测试功能</h4>
+                                <div class="form-row">
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-success" @click="testAllBasicFunctions">
+                                            🚀 测试所有基础功能
+                                        </button>
+                                        <br><small style="color: #666;">批量调用多个API</small>
+                                    </div>
+                                    <div style="display: inline-block; margin-right: 15px;">
+                                        <button class="btn btn-info" @click="testAllCRUDFunctions">
+                                            ✨ 测试所有CRUD功能
+                                        </button>
+                                        <br><small style="color: #666;">批量测试增删改查</small>
+                                    </div>
+                                    <div style="display: inline-block;">
+                                        <button class="btn btn-warning" @click="clearAllResponses">
+                                            🗑️ 清空所有结果
+                                        </button>
+                                        <br><small style="color: #666;">清空界面响应</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    baseURL: 'http://localhost:8080/api',
+                    activeTab: 'users',
+                    responses: {},
+                    loading: {},
+                    
+                    // 用户表单
+                    userForm: {
+                        userId: 'USER009',
+                        userName: 'testuser',
+                        roleId: 'ROLE001',
+                        agenciesId: 'DEPT001',
+                        fullName: '测试用户',
+                        password: '123456',
+                        status: 1,
+                        phoneNumber: '13900139000'
+                    },
+
+                    // 用户选择相关
+                    userList: [],
+                    selectedUserId: '',
+                    selectedUserInfo: null,
+                    
+                    // 订单表单
+                    orderForm: {
+                        userId: 'USER001',
+                        agenciesId: 'DEPT001',
+                        selectedTypeId: '',
+                        selectedAmount: 5,
+                        orderItemsList: []
+                    },
+
+                    // 订单分页参数
+                    orderPagination: {
+                        page: 0,
+                        size: 10,
+                        sortBy: 'createDatetime',
+                        sortDir: 'desc'
+                    },
+                    orderPaginationResult: null,
+
+                    // 餐票类型列表
+                    ticketTypes: [],
+
+                    // 当前草稿信息
+                    currentDraft: null,
+
+                    // 自动保存定时器
+                    autoSaveTimer: null,
+                    
+                    // 订单查询
+                    orderQuery: {
+                        orderId: 'ORDER001',
+                        status: 0  // 0=待审核，1=已通过，-1=已拒绝
+                    },
+                    
+                    // 餐票表单
+                    ticketForm: {
+                        orderId: 'ORDER001',
+                        typeId: 'TYPE001',
+                        quantity: 10,
+                        stallId: 'STALL001'
+                    },
+                    
+                    // 餐票查询
+                    ticketQuery: {
+                        ticketId: 'TICKET001',
+                        checkId: 'USER001'
+                    },
+                    
+                    // 部门表单
+                    agencyForm: {
+                        agenciesId: 'DEPT004',
+                        agenciesName: '测试部门'
+                    },
+                    
+                    // 食堂表单
+                    canteenForm: {
+                        canteenId: 'CANTEEN004',
+                        canteenName: '测试食堂',
+                        status: '1'
+                    }
+                }
+            },
+            methods: {
+                async makeRequest(method, url, data, key) {
+                    this.loading[key] = true;
+                    this.responses[key] = '请求中...';
+                    
+                    try {
+                        let response;
+                        if (method === 'GET') {
+                            response = await axios.get(url);
+                        } else if (method === 'POST') {
+                            response = await axios.post(url, data);
+                        } else if (method === 'PUT') {
+                            response = await axios.put(url, data);
+                        } else if (method === 'DELETE') {
+                            response = await axios.delete(url);
+                        }
+                        
+                        this.responses[key] = JSON.stringify(response.data, null, 2);
+                        this.loading[key] = false;
+                    } catch (error) {
+                        this.responses[key] = `请求失败:\n${error.message}\n\n响应详情:\n${error.response ? JSON.stringify(error.response.data, null, 2) : '无响应数据'}`;
+                        this.loading[key] = 'error';
+                    }
+                },
+
+                // 用户管理方法
+                async createUser() {
+                    await this.makeRequest('POST', `${this.baseURL}/users`, this.userForm, 'userOperation');
+                },
+                
+                async getUserById() {
+                    await this.makeRequest('GET', `${this.baseURL}/users/${this.userForm.userId}`, null, 'userOperation');
+                },
+                
+                async deleteUser() {
+                    await this.makeRequest('DELETE', `${this.baseURL}/users/${this.userForm.userId}`, null, 'userOperation');
+                },
+                
+                async getUserStatistics() {
+                    await this.makeRequest('GET', `${this.baseURL}/users/${this.userForm.userId}/statistics`, null, 'userOperation');
+                },
+                
+                async loadAllUsers() {
+                    await this.makeRequest('GET', `${this.baseURL}/users`, null, 'userOperation');
+                    // 同时更新用户列表
+                    await this.refreshUserList();
+                },
+
+                // 用户选择相关方法
+                async refreshUserList() {
+                    try {
+                        const response = await axios.get(`${this.baseURL}/users`);
+                        if (response.data && Array.isArray(response.data)) {
+                            this.userList = response.data;
+                        }
+                    } catch (error) {
+                        console.error('刷新用户列表失败:', error);
+                    }
+                },
+
+                onUserSelect() {
+                    if (this.selectedUserId) {
+                        this.selectedUserInfo = this.userList.find(user => user.userId === this.selectedUserId);
+                        // 同时更新表单中的用户ID，方便原有功能使用
+                        this.userForm.userId = this.selectedUserId;
+                    } else {
+                        this.selectedUserInfo = null;
+                    }
+                },
+
+                async getUserBySelectedId() {
+                    if (!this.selectedUserId) {
+                        alert('请先选择一个用户');
+                        return;
+                    }
+                    await this.makeRequest('GET', `${this.baseURL}/users/${this.selectedUserId}`, null, 'userOperation');
+                },
+
+                async deleteSelectedUser() {
+                    if (!this.selectedUserId) {
+                        alert('请先选择一个用户');
+                        return;
+                    }
+                    if (confirm(`确定要删除用户 ${this.selectedUserId} 吗？此操作不可恢复。`)) {
+                        await this.makeRequest('DELETE', `${this.baseURL}/users/${this.selectedUserId}`, null, 'userOperation');
+                        // 删除成功后刷新用户列表
+                        setTimeout(() => {
+                            this.refreshUserList();
+                            this.selectedUserId = '';
+                            this.selectedUserInfo = null;
+                        }, 1000);
+                    }
+                },
+
+                async getSelectedUserStatistics() {
+                    if (!this.selectedUserId) {
+                        alert('请先选择一个用户');
+                        return;
+                    }
+                    await this.makeRequest('GET', `${this.baseURL}/users/${this.selectedUserId}/statistics`, null, 'userOperation');
+                },
+
+                // 订单管理方法 - 整合草稿功能
+                async saveDraftAndContinue() {
+                    if (this.orderForm.orderItemsList.length === 0) {
+                        alert('请先添加订单项');
+                        return;
+                    }
+
+                    try {
+                        let draftData;
+
+                        if (this.currentDraft) {
+                            // 更新现有草稿
+                            draftData = {
+                                orderItems: this.orderForm.orderItemsList
+                            };
+                            await this.makeRequest('PUT', `${this.baseURL}/orders/draft/${this.currentDraft.draftId}/save`, draftData, 'orderOperation');
+                        } else {
+                            // 创建新草稿
+                            draftData = {
+                                userId: this.orderForm.userId,
+                                agenciesId: this.orderForm.agenciesId,
+                                orderItems: this.orderForm.orderItemsList
+                            };
+                            const response = await axios.post(`${this.baseURL}/orders/start`, draftData);
+                            if (response.data.code === '200') {
+                                this.currentDraft = response.data.data;
+                                this.responses.orderOperation = JSON.stringify(response.data, null, 2);
+                                this.loading.saveDraft = false;
+                            }
+                        }
+
+                        // 启动自动保存
+                        this.startAutoSave();
+
+                    } catch (error) {
+                        this.responses.orderOperation = `保存草稿失败:\n${error.message}`;
+                        this.loading.saveDraft = 'error';
+                    }
+                },
+
+                async createOrderFromDraft() {
+                    if (!this.currentDraft) {
+                        // 如果没有草稿，先创建草稿再提交
+                        await this.saveDraftAndContinue();
+                        if (!this.currentDraft) return;
+                    }
+
+                    // 提交草稿为正式订单
+                    await this.makeRequest('POST', `${this.baseURL}/orders/draft/${this.currentDraft.draftId}/submit`, null, 'orderOperation');
+
+                    // 清除草稿状态
+                    this.currentDraft = null;
+                    this.stopAutoSave();
+                },
+
+                async autoSaveDraft() {
+                    if (this.currentDraft && this.orderForm.orderItemsList.length > 0) {
+                        try {
+                            const draftData = {
+                                orderItems: this.orderForm.orderItemsList
+                            };
+                            await axios.put(`${this.baseURL}/orders/draft/${this.currentDraft.draftId}/save`, draftData);
+                            this.loading.autoSave = false;
+
+                            // 显示自动保存成功提示
+                            setTimeout(() => {
+                                this.loading.autoSave = null;
+                            }, 1000);
+                        } catch (error) {
+                            this.loading.autoSave = 'error';
+                        }
+                    }
+                },
+                
+                async getOrderById() {
+                    await this.makeRequest('GET', `${this.baseURL}/orders/${this.orderQuery.orderId}`, null, 'orderQuery');
+                },
+                
+                async getOrderDetails() {
+                    await this.makeRequest('GET', `${this.baseURL}/orders/${this.orderQuery.orderId}/details`, null, 'orderQuery');
+                },
+                
+                async deleteOrder() {
+                    await this.makeRequest('DELETE', `${this.baseURL}/orders/${this.orderQuery.orderId}`, null, 'orderQuery');
+                },
+                
+                async loadAllOrders() {
+                    await this.makeRequest('GET', `${this.baseURL}/orders`, null, 'orderOperation');
+                },
+
+                // 分页查询方法
+                async loadOrdersWithPagination() {
+                    const params = new URLSearchParams({
+                        page: this.orderPagination.page.toString(),
+                        size: this.orderPagination.size.toString(),
+                        sortBy: this.orderPagination.sortBy,
+                        sortDir: this.orderPagination.sortDir
+                    });
+
+                    try {
+                        this.loading.orderPagination = true;
+                        const response = await axios.get(`${this.baseURL}/orders/page?${params}`);
+
+                        console.log('分页查询响应:', response.data); // 调试日志
+
+                        if (response.data.code === '200') {
+                            this.orderPaginationResult = response.data.data;
+                            this.responses.orderPagination = JSON.stringify(response.data, null, 2);
+                            this.loading.orderPagination = false;
+
+                            // 调试分页结果
+                            console.log('分页结果:', this.orderPaginationResult);
+                            console.log('分页信息:', {
+                                page: this.orderPaginationResult.page,
+                                size: this.orderPaginationResult.size,
+                                totalElements: this.orderPaginationResult.totalElements,
+                                totalPages: this.orderPaginationResult.totalPages,
+                                first: this.orderPaginationResult.first,
+                                last: this.orderPaginationResult.last
+                            });
+                        } else {
+                            throw new Error(response.data.msg || '分页查询失败');
+                        }
+                    } catch (error) {
+                        console.error('分页查询错误:', error);
+                        this.responses.orderPagination = `分页查询失败:\n${error.message}\n\n响应详情:\n${error.response ? JSON.stringify(error.response.data, null, 2) : '无响应数据'}`;
+                        this.loading.orderPagination = 'error';
+                    }
+                },
+
+                async loadOrdersByUserWithPagination() {
+                    if (!this.orderForm.userId) {
+                        alert('请先填写用户ID');
+                        return;
+                    }
+
+                    const params = new URLSearchParams({
+                        page: this.orderPagination.page.toString(),
+                        size: this.orderPagination.size.toString(),
+                        sortBy: this.orderPagination.sortBy,
+                        sortDir: this.orderPagination.sortDir
+                    });
+
+                    try {
+                        this.loading.orderUserPagination = true;
+                        const response = await axios.get(`${this.baseURL}/orders/page/user/${this.orderForm.userId}?${params}`);
+
+                        if (response.data.code === '200') {
+                            this.orderPaginationResult = response.data.data;
+                            this.responses.orderUserPagination = JSON.stringify(response.data, null, 2);
+                            this.loading.orderUserPagination = false;
+                        } else {
+                            throw new Error(response.data.msg || '用户订单分页查询失败');
+                        }
+                    } catch (error) {
+                        this.responses.orderUserPagination = `用户订单分页查询失败:\n${error.message}\n\n响应详情:\n${error.response ? JSON.stringify(error.response.data, null, 2) : '无响应数据'}`;
+                        this.loading.orderUserPagination = 'error';
+                    }
+                },
+
+                async loadOrdersByStatusWithPagination() {
+                    if (this.orderQuery.status === undefined || this.orderQuery.status === '') {
+                        alert('请先设置订单状态');
+                        return;
+                    }
+
+                    const params = new URLSearchParams({
+                        page: this.orderPagination.page.toString(),
+                        size: this.orderPagination.size.toString(),
+                        sortBy: this.orderPagination.sortBy,
+                        sortDir: this.orderPagination.sortDir
+                    });
+
+                    try {
+                        this.loading.orderStatusPagination = true;
+                        const response = await axios.get(`${this.baseURL}/orders/page/status/${this.orderQuery.status}?${params}`);
+
+                        if (response.data.code === '200') {
+                            this.orderPaginationResult = response.data.data;
+                            this.responses.orderStatusPagination = JSON.stringify(response.data, null, 2);
+                            this.loading.orderStatusPagination = false;
+                        } else {
+                            throw new Error(response.data.msg || '状态订单分页查询失败');
+                        }
+                    } catch (error) {
+                        this.responses.orderStatusPagination = `状态订单分页查询失败:\n${error.message}\n\n响应详情:\n${error.response ? JSON.stringify(error.response.data, null, 2) : '无响应数据'}`;
+                        this.loading.orderStatusPagination = 'error';
+                    }
+                },
+
+                // 分页导航方法
+                previousPage() {
+                    if (this.orderPaginationResult && !this.orderPaginationResult.first) {
+                        this.orderPagination.page = this.orderPaginationResult.page - 1;
+                        this.loadOrdersWithPagination();
+                    }
+                },
+
+                nextPage() {
+                    if (this.orderPaginationResult && !this.orderPaginationResult.last) {
+                        this.orderPagination.page = this.orderPaginationResult.page + 1;
+                        this.loadOrdersWithPagination();
+                    }
+                },
+
+                // 餐票管理方法
+                async createTickets() {
+                    const ticketData = {
+                        orderId: this.ticketForm.orderId,
+                        typeId: this.ticketForm.typeId,
+                        quantity: parseInt(this.ticketForm.quantity),
+                        stallId: this.ticketForm.stallId
+                    };
+                    await this.makeRequest('POST', `${this.baseURL}/tickets/create`, ticketData, 'ticketOperation');
+                },
+                
+                async getTicketById() {
+                    await this.makeRequest('GET', `${this.baseURL}/tickets/${this.ticketQuery.ticketId}`, null, 'ticketQuery');
+                },
+                
+                async cancelTicket() {
+                    await this.makeRequest('POST', `${this.baseURL}/tickets/${this.ticketQuery.ticketId}/cancel?checkId=${this.ticketQuery.checkId}`, null, 'ticketQuery');
+                },
+                
+                async loadAllTickets() {
+                    await this.makeRequest('GET', `${this.baseURL}/tickets/selectAll`, null, 'ticketOperation');
+                },
+
+                // 部门管理方法
+                async createAgency() {
+                    // 构建完整的部门数据，包含所有必填字段
+                    const agencyData = {
+                        agenciesId: this.agencyForm.agenciesId,
+                        agenciesName: this.agencyForm.agenciesName,
+                        status: 1, // 默认启用状态
+                        fkCreator: 'system', // 创建者
+                        createDatetime: new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', ''), // 格式: yyyyMMddHHmmss
+                        createIP: '127.0.0.1' // 创建IP
+                    };
+
+                    await this.makeRequest('POST', `${this.baseURL}/agencies`, agencyData, 'agencyOperation');
+                },
+                
+                async getAgencyById() {
+                    await this.makeRequest('GET', `${this.baseURL}/agencies/${this.agencyForm.agenciesId}`, null, 'agencyOperation');
+                },
+                
+                async deleteAgency() {
+                    await this.makeRequest('DELETE', `${this.baseURL}/agencies/${this.agencyForm.agenciesId}`, null, 'agencyOperation');
+                },
+                
+                async loadAllAgencies() {
+                    await this.makeRequest('GET', `${this.baseURL}/agencies`, null, 'agencyOperation');
+                },
+
+                // 食堂管理方法
+                async createCanteen() {
+                    // 构建完整的食堂数据，包含所有必填字段
+                    const canteenData = {
+                        canteenId: this.canteenForm.canteenId,
+                        canteenName: this.canteenForm.canteenName,
+                        status: parseInt(this.canteenForm.status),
+                        fkCreator: 'system',
+                        createDatetime: new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', ''),
+                        createIp: '127.0.0.1'  // 注意：字段名是createIp，不是createIP
+                    };
+
+                    console.log('创建食堂数据:', canteenData); // 调试日志
+                    await this.makeRequest('POST', `${this.baseURL}/canteen`, canteenData, 'canteenOperation');
+                },
+                
+                async getCanteenById() {
+                    await this.makeRequest('GET', `${this.baseURL}/canteen/${this.canteenForm.canteenId}`, null, 'canteenOperation');
+                },
+                
+                async updateCanteen() {
+                    // 构建完整的食堂更新数据
+                    const canteenData = {
+                        canteenId: this.canteenForm.canteenId,
+                        canteenName: this.canteenForm.canteenName,
+                        status: parseInt(this.canteenForm.status),
+                        fkCreator: 'system', // 保持原创建者或使用当前用户
+                        createDatetime: new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', ''),
+                        createIp: '127.0.0.1'
+                    };
+
+                    console.log('更新食堂数据:', canteenData); // 调试日志
+                    await this.makeRequest('PUT', `${this.baseURL}/canteen`, canteenData, 'canteenOperation');
+                },
+                
+                async deleteCanteen() {
+                    await this.makeRequest('DELETE', `${this.baseURL}/canteen/${this.canteenForm.canteenId}`, null, 'canteenOperation');
+                },
+
+                async loadAllCanteens() {
+                    await this.makeRequest('GET', `${this.baseURL}/canteen`, null, 'canteenOperation');
+                },
+
+                // 系统功能方法
+                async testDatabaseHealth() {
+                    await this.makeRequest('GET', `${this.baseURL}/database-test/health`, null, 'systemOperation');
+                },
+                
+                async testDatabaseConnection() {
+                    await this.makeRequest('GET', `${this.baseURL}/database-test/connection`, null, 'systemOperation');
+                },
+                
+                async getDatabaseInfo() {
+                    await this.makeRequest('GET', `${this.baseURL}/database-test/info`, null, 'systemOperation');
+                },
+
+                // 工具方法
+                getStatusClass(key) {
+                    if (this.loading[key] === true) return 'status-loading';
+                    if (this.loading[key] === 'error') return 'status-error';
+                    if (this.responses[key] && this.loading[key] === false) return 'status-success';
+                    return '';
+                },
+
+                getResponseClass(key) {
+                    if (this.loading[key] === true) return 'loading';
+                    if (this.loading[key] === 'error') return 'error';
+                    if (this.responses[key] && this.loading[key] === false) return 'success';
+                    return '';
+                },
+
+                clearForm(type) {
+                    switch(type) {
+                        case 'user':
+                            this.userForm = {
+                                userId: '',
+                                userName: '',
+                                roleId: 'ROLE001',
+                                agenciesId: 'DEPT001',
+                                fullName: '',
+                                password: '123456',
+                                status: 1,
+                                phoneNumber: ''
+                            };
+                            break;
+                        case 'order':
+                            this.orderForm = {
+                                userId: 'USER001',
+                                agenciesId: 'DEPT001',
+                                selectedTypeId: '',
+                                selectedAmount: 5,
+                                orderItemsList: []
+                            };
+                            this.currentDraft = null;
+                            this.stopAutoSave();
+                            break;
+                        case 'ticket':
+                            this.ticketForm = {
+                                orderId: '',
+                                typeId: 'TYPE001',
+                                quantity: 10,
+                                stallId: 'STALL001'
+                            };
+                            break;
+                        case 'agency':
+                            this.agencyForm = {
+                                agenciesId: '',
+                                agenciesName: ''
+                            };
+                            break;
+                        case 'canteen':
+                            this.canteenForm = {
+                                canteenId: '',
+                                canteenName: '',
+                                status: '1'
+                            };
+                            break;
+                    }
+                },
+
+                async testAllBasicFunctions() {
+                    await this.testDatabaseHealth();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await this.getUserById();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await this.getOrderById();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await this.getTicketById();
+                },
+
+                async testAllCRUDFunctions() {
+                    // 测试用户CRUD
+                    this.userForm.userId = 'TEST001';
+                    this.userForm.userName = 'testuser';
+                    this.userForm.fullName = '测试用户';
+                    await this.createUser();
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await this.getUserById();
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await this.deleteUser();
+                },
+
+                clearAllResponses() {
+                    this.responses = {};
+                    this.loading = {};
+                },
+
+                // 订单项管理方法
+                addOrderItem() {
+                    if (!this.orderForm.selectedTypeId) {
+                        alert('请选择餐票类型');
+                        return;
+                    }
+                    if (!this.orderForm.selectedAmount || this.orderForm.selectedAmount <= 0) {
+                        alert('请输入有效的数量');
+                        return;
+                    }
+
+                    // 检查是否已存在相同类型
+                    const existingIndex = this.orderForm.orderItemsList.findIndex(
+                        item => item.typeId === this.orderForm.selectedTypeId
+                    );
+
+                    if (existingIndex >= 0) {
+                        // 如果已存在，更新数量
+                        this.orderForm.orderItemsList[existingIndex].amount = parseInt(this.orderForm.selectedAmount);
+                    } else {
+                        // 添加新项
+                        this.orderForm.orderItemsList.push({
+                            typeId: this.orderForm.selectedTypeId,
+                            amount: parseInt(this.orderForm.selectedAmount)
+                        });
+                    }
+
+                    // 更新JSON字符串
+                    this.updateOrderItemsJson();
+
+                    // 如果是第一个订单项，自动创建草稿
+                    if (this.orderForm.orderItemsList.length === 1 && !this.currentDraft) {
+                        setTimeout(() => {
+                            this.saveDraftAndContinue();
+                        }, 500);
+                    }
+
+                    // 清空选择
+                    this.orderForm.selectedTypeId = '';
+                    this.orderForm.selectedAmount = 5;
+                },
+
+                removeOrderItem(index) {
+                    this.orderForm.orderItemsList.splice(index, 1);
+                    this.updateOrderItemsJson();
+                },
+
+                updateOrderItemsJson() {
+                    this.orderForm.orderItems = JSON.stringify(this.orderForm.orderItemsList);
+                },
+
+                getTypeName(typeId) {
+                    const type = this.ticketTypes.find(t => t.typeId === typeId);
+                    return type ? `${type.typeName} (¥${type.value})` : typeId;
+                },
+
+                // 加载餐票类型
+                async loadTicketTypes() {
+                    try {
+                        const response = await axios.get(`${this.baseURL}/ticket-types`);
+                        if (response.data.code === '200') {
+                            this.ticketTypes = response.data.data;
+                        }
+                    } catch (error) {
+                        console.error('加载餐票类型失败:', error);
+                    }
+                },
+
+                // 草稿管理功能
+                async checkExistingDraft() {
+                    try {
+                        const response = await axios.get(`${this.baseURL}/orders/drafts/current/${this.orderForm.userId}`);
+                        if (response.data.code === '200' && response.data.data) {
+                            // 找到当前未完成的草稿
+                            this.currentDraft = response.data.data;
+                        }
+                    } catch (error) {
+                        console.log('没有找到现有草稿');
+                    }
+                },
+
+                async loadDraft() {
+                    if (!this.currentDraft) return;
+
+                    try {
+                        const response = await axios.get(`${this.baseURL}/orders/draft/${this.currentDraft.draftId}`);
+                        if (response.data.code === '200') {
+                            const draftData = response.data.data;
+
+                            // 加载草稿数据到表单
+                            this.orderForm.userId = draftData.userId;
+                            this.orderForm.agenciesId = draftData.agenciesId;
+
+                            // 加载订单项
+                            if (draftData.orderItems && draftData.orderItems.length > 0) {
+                                this.orderForm.orderItemsList = draftData.orderItems;
+                                this.updateOrderItemsJson();
+                            }
+
+                            // 启动自动保存
+                            this.startAutoSave();
+
+                            alert('草稿加载成功！');
+                        }
+                    } catch (error) {
+                        alert('加载草稿失败: ' + error.message);
+                    }
+                },
+
+                async clearDraft() {
+                    if (!this.currentDraft) return;
+
+                    if (confirm('确定要清除当前草稿吗？此操作不可恢复。')) {
+                        try {
+                            await axios.delete(`${this.baseURL}/orders/draft/${this.currentDraft.draftId}`);
+                            this.currentDraft = null;
+                            this.stopAutoSave();
+
+                            // 清空表单
+                            this.orderForm.orderItemsList = [];
+                            this.updateOrderItemsJson();
+
+                            alert('草稿已清除');
+                        } catch (error) {
+                            alert('清除草稿失败: ' + error.message);
+                        }
+                    }
+                },
+
+                // 自动保存功能
+                startAutoSave() {
+                    this.stopAutoSave(); // 先停止现有的定时器
+
+                    this.autoSaveTimer = setInterval(() => {
+                        if (this.currentDraft && this.orderForm.orderItemsList.length > 0) {
+                            this.autoSaveDraft();
+                        }
+                    }, 30000); // 每30秒自动保存一次
+                },
+
+                stopAutoSave() {
+                    if (this.autoSaveTimer) {
+                        clearInterval(this.autoSaveTimer);
+                        this.autoSaveTimer = null;
+                    }
+                }
+            },
+
+            // 组件挂载时加载数据
+            async mounted() {
+                await this.loadTicketTypes();
+                await this.checkExistingDraft();
+                await this.refreshUserList(); // 初始化用户列表
+            },
+
+            // 监听订单项变化，自动触发保存
+            watch: {
+                'orderForm.orderItemsList': {
+                    handler(newItems) {
+                        this.updateOrderItemsJson();
+
+                        // 如果有草稿且有订单项，延迟自动保存
+                        if (this.currentDraft && newItems.length > 0) {
+                            clearTimeout(this.delayedSaveTimer);
+                            this.delayedSaveTimer = setTimeout(() => {
+                                this.autoSaveDraft();
+                            }, 2000); // 2秒后自动保存
+                        }
+                    },
+                    deep: true
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
