@@ -84,8 +84,8 @@ public class DraftOrderItemDTO {
     
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o){ return true;}
+        if (o == null || getClass() != o.getClass()){ return false;}
         
         DraftOrderItemDTO that = (DraftOrderItemDTO) o;
         return typeId != null ? typeId.equals(that.typeId) : that.typeId == null;
